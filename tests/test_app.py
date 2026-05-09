@@ -20,25 +20,90 @@ class FakeLLMClient:
                 break
 
         if tools:
+            tool_payloads = [json.loads(message["content"]) for message in messages if message["role"] == "tool"]
+            executed_tools = []
+            for message in messages:
+                if message["role"] == "assistant" and message.get("tool_calls"):
+                    executed_tools.extend(call["function"]["name"] for call in message["tool_calls"])
+
             if "235 * 18" in last_user_message:
+                if executed_tools == ["calculator"]:
+                    return FakeResponse(
+                        content="",
+                        tool_calls=[
+                            FakeToolCall("call_todo", "todo_create", {"title": "记录计算结果 4230"}),
+                        ],
+                    )
+                if "todo_create" in executed_tools:
+                    return FakeResponse(
+                        content=json.dumps(
+                            {
+                                "answer": "计算结果是 4230，我已经帮你创建了待办事项。",
+                                "intent": "calculate_and_create_todo",
+                                "tool_used": ["calculator", "todo_create"],
+                                "confidence": 0.91,
+                            },
+                            ensure_ascii=False,
+                        ),
+                        tool_calls=[],
+                    )
                 return FakeResponse(
                     content="",
-                    tool_calls=[
-                        FakeToolCall("call_calc", "calculator", {"expression": "235 * 18"}),
-                        FakeToolCall("call_todo", "todo_create", {"title": "记录计算结果 4230"}),
-                    ],
+                    tool_calls=[FakeToolCall("call_calc", "calculator", {"expression": "235 * 18"})],
                 )
             if "天气" in last_user_message:
+                if tool_payloads:
+                    weather = tool_payloads[-1]
+                    return FakeResponse(
+                        content=json.dumps(
+                            {
+                                "answer": f"{weather['city']}当前天气{weather['condition']}，气温{weather['temperature_c']}度。",
+                                "intent": "weather_lookup",
+                                "tool_used": ["fake_weather"],
+                                "confidence": 0.91,
+                            },
+                            ensure_ascii=False,
+                        ),
+                        tool_calls=[],
+                    )
                 return FakeResponse(
                     content="",
                     tool_calls=[FakeToolCall("call_weather", "fake_weather", {"city": "北京"})],
                 )
             if "待办列表" in last_user_message:
+                if tool_payloads:
+                    items = tool_payloads[-1]["items"]
+                    return FakeResponse(
+                        content=json.dumps(
+                            {
+                                "answer": f"当前共有 {len(items)} 个待办事项。",
+                                "intent": "todo_list",
+                                "tool_used": ["todo_list"],
+                                "confidence": 0.91,
+                            },
+                            ensure_ascii=False,
+                        ),
+                        tool_calls=[],
+                    )
                 return FakeResponse(
                     content="",
                     tool_calls=[FakeToolCall("call_todo_list", "todo_list", {})],
                 )
             if "坏掉" in last_user_message:
+                if tool_payloads:
+                    payload = tool_payloads[-1]
+                    return FakeResponse(
+                        content=json.dumps(
+                            {
+                                "answer": f"计算失败：{payload['error']}",
+                                "intent": "tool_error",
+                                "tool_used": ["calculator"],
+                                "confidence": 0.91,
+                            },
+                            ensure_ascii=False,
+                        ),
+                        tool_calls=[],
+                    )
                 return FakeResponse(
                     content="",
                     tool_calls=[FakeToolCall("call_bad_calc", "calculator", {"expression": "1 / 0"})],
@@ -56,40 +121,12 @@ class FakeLLMClient:
                 tool_calls=[],
             )
 
-        tool_names = []
-        tool_payloads = []
-        for message in messages:
-            if message["role"] == "tool":
-                tool_payloads.append(json.loads(message["content"]))
-        for message in messages:
-            if message["role"] == "assistant" and message.get("tool_calls"):
-                tool_names.extend(call["function"]["name"] for call in message["tool_calls"])
-
-        answer = "工具执行完成。"
-        intent = "tool_usage"
-        if "fake_weather" in tool_names:
-            weather = tool_payloads[-1]
-            answer = f"{weather['city']}当前天气{weather['condition']}，气温{weather['temperature_c']}度。"
-            intent = "weather_lookup"
-        elif "todo_list" in tool_names:
-            items = tool_payloads[-1]["items"]
-            answer = f"当前共有 {len(items)} 个待办事项。"
-            intent = "todo_list"
-        elif "calculator" in tool_names and "todo_create" in tool_names:
-            answer = "计算结果是 4230，我已经帮你创建了待办事项。"
-            intent = "calculate_and_create_todo"
-        elif "calculator" in tool_names:
-            payload = tool_payloads[-1]
-            if "error" in payload:
-                answer = f"计算失败：{payload['error']}"
-                intent = "tool_error"
-
         return FakeResponse(
             content=json.dumps(
                 {
-                    "answer": answer,
-                    "intent": intent,
-                    "tool_used": tool_names,
+                    "answer": "工具执行完成。",
+                    "intent": "tool_usage",
+                    "tool_used": [],
                     "confidence": 0.91,
                 },
                 ensure_ascii=False,

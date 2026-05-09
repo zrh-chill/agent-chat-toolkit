@@ -27,6 +27,7 @@ class AgentService:
         self.database = database
         self.llm_client = llm_client
         self.tools = ToolRegistry(database)
+        self.max_tool_rounds = 4
 
     async def run(self, message: str, conversation_id: str | None = None) -> AgentResponse:
         collected: list[StreamEvent] = []
@@ -50,19 +51,23 @@ class AgentService:
 
         tool_records: list[ToolCallRecord] = []
 
-        try:
-            first_pass: LLMResponse = await self.llm_client.complete(
-                messages=messages,
-                tools=self.tools.openai_schemas(),
-            )
-        except LLMClientError as exc:
-            yield StreamEvent(event="error", data={"message": f"LLM request failed: {exc}"})
-            raise
+        current_response: LLMResponse | None = None
+        for _ in range(self.max_tool_rounds):
+            try:
+                current_response = await self.llm_client.complete(
+                    messages=messages,
+                    tools=self.tools.openai_schemas(),
+                )
+            except LLMClientError as exc:
+                yield StreamEvent(event="error", data={"message": f"LLM request failed: {exc}"})
+                raise
 
-        if first_pass.tool_calls:
+            if not current_response.tool_calls:
+                break
+
             assistant_tool_message = {
                 "role": "assistant",
-                "content": first_pass.content or "",
+                "content": current_response.content or "",
                 "tool_calls": [
                     {
                         "id": tool_call.id,
@@ -72,12 +77,12 @@ class AgentService:
                             "arguments": json.dumps(tool_call.arguments, ensure_ascii=False),
                         },
                     }
-                    for tool_call in first_pass.tool_calls
+                    for tool_call in current_response.tool_calls
                 ],
             }
             messages.append(assistant_tool_message)
 
-            for tool_call in first_pass.tool_calls:
+            for tool_call in current_response.tool_calls:
                 yield StreamEvent(
                     event="tool_start",
                     data={"tool": tool_call.name, "input": tool_call.arguments},
@@ -126,22 +131,14 @@ class AgentService:
                     },
                 )
 
-            try:
-                final_pass = await self.llm_client.complete(messages=messages)
-            except LLMClientError as exc:
-                yield StreamEvent(event="error", data={"message": f"LLM request failed: {exc}"})
-                raise
-            final_response = self._build_response(
-                content=final_pass.content,
-                conversation_id=conversation_id,
-                tool_records=tool_records,
-            )
-        else:
-            final_response = self._build_response(
-                content=first_pass.content,
-                conversation_id=conversation_id,
-                tool_records=tool_records,
-            )
+        if current_response is None:
+            raise RuntimeError("Agent did not receive a model response.")
+
+        final_response = self._build_response(
+            content=current_response.content,
+            conversation_id=conversation_id,
+            tool_records=tool_records,
+        )
 
         self.database.save_message(conversation_id, "assistant", final_response.answer)
         for char in final_response.answer:
