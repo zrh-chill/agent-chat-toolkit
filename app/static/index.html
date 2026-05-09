@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Chat Toolkit</title>
+    <style>
+      :root {
+        --bg: linear-gradient(135deg, #f7efe5 0%, #d7e7f5 100%);
+        --panel: rgba(255, 255, 255, 0.88);
+        --text: #1f2937;
+        --muted: #667085;
+        --accent: #d97706;
+        --accent-soft: #fff1dc;
+        --border: rgba(15, 23, 42, 0.12);
+        --shadow: 0 24px 60px rgba(31, 41, 55, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .shell {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      .hero {
+        margin-bottom: 18px;
+      }
+
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 3vw, 3.4rem);
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 720px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 1.6fr 0.9fr;
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+      }
+
+      .chat-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 72vh;
+      }
+
+      .messages {
+        padding: 20px;
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .bubble {
+        max-width: 80%;
+        padding: 14px 16px;
+        border-radius: 18px;
+        line-height: 1.55;
+        animation: rise 220ms ease;
+        white-space: pre-wrap;
+      }
+
+      .bubble.user {
+        align-self: flex-end;
+        background: #1f2937;
+        color: #fff;
+        border-bottom-right-radius: 6px;
+      }
+
+      .bubble.assistant {
+        align-self: flex-start;
+        background: #fff9f1;
+        border-bottom-left-radius: 6px;
+      }
+
+      .composer {
+        padding: 18px 20px 20px;
+        border-top: 1px solid var(--border);
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 110px;
+        resize: vertical;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 14px 16px;
+        font: inherit;
+        outline: none;
+        background: rgba(255, 255, 255, 0.92);
+      }
+
+      textarea:focus {
+        border-color: rgba(217, 119, 6, 0.45);
+        box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.12);
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .send {
+        background: linear-gradient(135deg, #f59e0b, #c2410c);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .secondary {
+        background: var(--accent-soft);
+        color: #7c4300;
+      }
+
+      .side {
+        padding: 18px;
+      }
+
+      .side h2 {
+        margin: 6px 0 12px;
+        font-size: 1.05rem;
+      }
+
+      .tool-log {
+        display: grid;
+        gap: 12px;
+      }
+
+      .tool-item {
+        background: rgba(255, 255, 255, 0.74);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 14px;
+      }
+
+      .tool-item strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .meta {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .empty {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .chat-card {
+          min-height: 60vh;
+        }
+        .bubble {
+          max-width: 92%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="hero">
+        <h1>Agent Chat Toolkit</h1>
+        <p>一个最小但完整的 Agent 聊天演示。你可以直接和模型对话，也可以观察它什么时候调用计算器、待办事项和 mock 天气工具。</p>
+      </div>
+
+      <div class="app">
+        <section class="card chat-card">
+          <div id="messages" class="messages">
+            <div class="bubble assistant">你好，我已经准备好接收你的问题了。</div>
+          </div>
+
+          <div class="composer">
+            <div class="controls">
+              <label><input id="streamMode" type="checkbox" checked /> 使用流式接口</label>
+              <span id="status">等待输入</span>
+            </div>
+            <textarea id="messageInput" placeholder="试试：帮我计算 235 * 18，然后生成一个待办事项"></textarea>
+            <div class="actions">
+              <button class="secondary" id="clearBtn" type="button">清空会话</button>
+              <button class="send" id="sendBtn" type="button">发送消息</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="card side">
+          <h2>工具调用过程</h2>
+          <div id="toolLog" class="tool-log">
+            <div class="empty">工具调用记录会显示在这里。</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      const messagesEl = document.getElementById("messages");
+      const toolLogEl = document.getElementById("toolLog");
+      const inputEl = document.getElementById("messageInput");
+      const statusEl = document.getElementById("status");
+      const streamModeEl = document.getElementById("streamMode");
+      const sendBtn = document.getElementById("sendBtn");
+      const clearBtn = document.getElementById("clearBtn");
+
+      let conversationId = null;
+      let activeAssistantBubble = null;
+
+      function addBubble(role, text) {
+        const node = document.createElement("div");
+        node.className = `bubble ${role}`;
+        node.textContent = text;
+        messagesEl.appendChild(node);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return node;
+      }
+
+      function renderToolItem(title, meta, body) {
+        if (toolLogEl.querySelector(".empty")) {
+          toolLogEl.innerHTML = "";
+        }
+        const item = document.createElement("div");
+        item.className = "tool-item";
+        item.innerHTML = `<strong>${title}</strong><div class="meta">${meta}</div><div>${body}</div>`;
+        toolLogEl.prepend(item);
+      }
+
+      function setBusy(busy, text) {
+        sendBtn.disabled = busy;
+        inputEl.disabled = busy;
+        statusEl.textContent = text;
+      }
+
+      async function sendMessage() {
+        const message = inputEl.value.trim();
+        if (!message) return;
+
+        addBubble("user", message);
+        activeAssistantBubble = addBubble("assistant", "");
+        inputEl.value = "";
+        setBusy(true, "处理中...");
+
+        const payload = { message, conversation_id: conversationId };
+
+        try {
+          if (streamModeEl.checked) {
+            await sendStream(payload);
+          } else {
+            await sendStandard(payload);
+          }
+          setBusy(false, "完成");
+        } catch (error) {
+          activeAssistantBubble.textContent = `请求失败：${error.message}`;
+          setBusy(false, "失败");
+        }
+      }
+
+      async function sendStandard(payload) {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(detail);
+        }
+        const data = await response.json();
+        conversationId = data.conversation_id;
+        activeAssistantBubble.textContent = data.answer;
+        renderToolsFromFinal(data.tool_calls || []);
+      }
+
+      async function sendStream(payload) {
+        const response = await fetch("/chat/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(detail);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          for (const chunk of parts) {
+            handleSseChunk(chunk);
+          }
+        }
+      }
+
+      function handleSseChunk(chunk) {
+        const lines = chunk.split("\n");
+        const eventLine = lines.find((line) => line.startsWith("event: "));
+        const dataLine = lines.find((line) => line.startsWith("data: "));
+        if (!eventLine || !dataLine) return;
+
+        const event = eventLine.replace("event: ", "").trim();
+        const data = JSON.parse(dataLine.replace("data: ", ""));
+
+        if (event === "message_delta") {
+          activeAssistantBubble.textContent += data.delta;
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        } else if (event === "tool_start") {
+          renderToolItem(data.tool, "执行中", `<pre>${JSON.stringify(data.input, null, 2)}</pre>`);
+        } else if (event === "tool_end") {
+          renderToolItem(
+            data.tool,
+            data.status === "success" ? "执行完成" : "执行失败",
+            `<pre>${JSON.stringify(data.output, null, 2)}</pre>`
+          );
+        } else if (event === "final") {
+          conversationId = data.response.conversation_id;
+          renderToolsFromFinal(data.response.tool_calls || []);
+        } else if (event === "error") {
+          activeAssistantBubble.textContent = data.message;
+        }
+      }
+
+      function renderToolsFromFinal(toolCalls) {
+        if (!toolCalls.length) return;
+        for (const call of toolCalls) {
+          renderToolItem(
+            call.tool,
+            call.status === "success" ? "已记录" : "失败",
+            `<pre>${JSON.stringify(call.output, null, 2)}</pre>`
+          );
+        }
+      }
+
+      sendBtn.addEventListener("click", sendMessage);
+      clearBtn.addEventListener("click", () => {
+        conversationId = null;
+        messagesEl.innerHTML = '<div class="bubble assistant">你好，我已经准备好接收你的问题了。</div>';
+        toolLogEl.innerHTML = '<div class="empty">工具调用记录会显示在这里。</div>';
+        statusEl.textContent = "等待输入";
+      });
+      inputEl.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+          sendMessage();
+        }
+      });
+    </script>
+  </body>
+</html>
