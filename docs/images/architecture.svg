@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#059669"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ea580c"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+    </marker>
+  </defs>
+  <style>text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; } .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; } .title { font-size: 28px; font-weight: 700; fill: #111827; } .sub { font-size: 13px; fill: #6b7280; } .label { font-size: 14px; font-weight: 600; fill: #111827; } .small { font-size: 12px; fill: #6b7280; } .tiny { font-size: 11px; fill: #6b7280; }</style>
+  <rect width="960" height="640" fill="#ffffff"/>
+  <text x="480.0" y="38" text-anchor="middle" class="title">agent-chat-toolkit Project Architecture</text>
+  <text x="480" y="62" text-anchor="middle" class="sub">FastAPI backend, manual agent loop, SQLite persistence, SSE streaming and static frontend</text>
+  <rect x="50" y="90" width="860" height="110" rx="22" ry="22" fill="none" stroke="#dbe5f1" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <text x="68" y="116" class="small" fill="#2563eb">Client Layer</text>
+  <rect x="50" y="220" width="860" height="170" rx="22" ry="22" fill="none" stroke="#dbe5f1" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <text x="68" y="246" class="small" fill="#2563eb">Application Layer</text>
+  <rect x="50" y="410" width="860" height="160" rx="22" ry="22" fill="none" stroke="#dbe5f1" stroke-width="1.5" stroke-dasharray="7 6"/>
+  <text x="68" y="436" class="small" fill="#2563eb">Persistence and External Services</text>
+  <rect x="95" y="125" width="190" height="56" rx="18" ry="18" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="190.0" y="153" text-anchor="middle" class="label">Browser UI</text>
+  <text x="190.0" y="175" text-anchor="middle" class="small">Static index.html</text>
+  <text x="190.0" y="191" text-anchor="middle" class="small">chat page</text>
+  <rect x="385" y="125" width="190" height="56" rx="18" ry="18" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="480.0" y="153" text-anchor="middle" class="label">REST Client</text>
+  <text x="480.0" y="175" text-anchor="middle" class="small">curl / docs / SDK</text>
+  <text x="480.0" y="191" text-anchor="middle" class="small">caller</text>
+  <rect x="675" y="125" width="190" height="56" rx="18" ry="18" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="770.0" y="153" text-anchor="middle" class="label">SSE Consumer</text>
+  <text x="770.0" y="175" text-anchor="middle" class="small">Streaming text</text>
+  <text x="770.0" y="191" text-anchor="middle" class="small">and tool events</text>
+  <rect x="85" y="260" width="170" height="86" rx="18" ry="18" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="170.0" y="288" text-anchor="middle" class="label">FastAPI Router</text>
+  <text x="170.0" y="310" text-anchor="middle" class="small">GET /, /health,</text>
+  <text x="170.0" y="326" text-anchor="middle" class="small">POST /chat,</text>
+  <text x="170.0" y="342" text-anchor="middle" class="small">POST</text>
+  <text x="170.0" y="358" text-anchor="middle" class="small">/chat/stream</text>
+  <rect x="290" y="260" width="170" height="86" rx="18" ry="18" fill="#faf5ff" stroke="#ddd6fe" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="375.0" y="288" text-anchor="middle" class="label">AgentService</text>
+  <text x="375.0" y="310" text-anchor="middle" class="small">Prompt</text>
+  <text x="375.0" y="326" text-anchor="middle" class="small">assembly, tool</text>
+  <text x="375.0" y="342" text-anchor="middle" class="small">loop, response</text>
+  <text x="375.0" y="358" text-anchor="middle" class="small">validation</text>
+  <rect x="495" y="260" width="170" height="86" rx="18" ry="18" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="580.0" y="288" text-anchor="middle" class="label">ToolRegistry</text>
+  <text x="580.0" y="310" text-anchor="middle" class="small">calculator,</text>
+  <text x="580.0" y="326" text-anchor="middle" class="small">todo_create,</text>
+  <text x="580.0" y="342" text-anchor="middle" class="small">todo_list,</text>
+  <text x="580.0" y="358" text-anchor="middle" class="small">fake_weather</text>
+  <rect x="700" y="260" width="170" height="86" rx="18" ry="18" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="785.0" y="288" text-anchor="middle" class="label">OpenAI-Compatible LLM</text>
+  <text x="785.0" y="310" text-anchor="middle" class="small">DashScope or</text>
+  <text x="785.0" y="326" text-anchor="middle" class="small">OpenAI Chat</text>
+  <text x="785.0" y="342" text-anchor="middle" class="small">Completions</text>
+  <rect x="200" y="455" width="220" height="82" rx="18" ry="18" fill="#ecfeff" stroke="#a5f3fc" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="310.0" y="483" text-anchor="middle" class="label">SQLite Database</text>
+  <text x="310.0" y="505" text-anchor="middle" class="small">conversations,</text>
+  <text x="310.0" y="521" text-anchor="middle" class="small">messages, tool_calls</text>
+  <rect x="470" y="455" width="180" height="82" rx="18" ry="18" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="560.0" y="483" text-anchor="middle" class="label">Static Assets</text>
+  <text x="560.0" y="505" text-anchor="middle" class="small">README images</text>
+  <text x="560.0" y="521" text-anchor="middle" class="small">and frontend</text>
+  <text x="560.0" y="537" text-anchor="middle" class="small">files</text>
+  <rect x="700" y="455" width="120" height="82" rx="18" ry="18" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="760.0" y="483" text-anchor="middle" class="label">Nginx</text>
+  <text x="760.0" y="505" text-anchor="middle" class="small">HTTPS</text>
+  <text x="760.0" y="521" text-anchor="middle" class="small">reverse</text>
+  <text x="760.0" y="537" text-anchor="middle" class="small">proxy</text>
+  <path d="M 190 181 L 170 260" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowBlue)"/>
+  <rect x="148.0" y="198.5" width="64" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="180.0" y="212.5" text-anchor="middle" class="tiny">UI calls</text>
+  <path d="M 480 181 L 170 303" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowBlue)"/>
+  <rect x="298.0" y="220.0" width="54" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="325.0" y="234.0" text-anchor="middle" class="tiny">HTTP</text>
+  <path d="M 770 181 L 170 303" fill="none" stroke="#7c3aed" stroke-width="2.2" marker-end="url(#arrowPurple)"/>
+  <rect x="443.0" y="220.0" width="54" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="470.0" y="234.0" text-anchor="middle" class="tiny">SSE</text>
+  <path d="M 255 303 L 290 303" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowBlue)"/>
+  <rect x="245.5" y="281.0" width="54" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="272.5" y="295.0" text-anchor="middle" class="tiny">route</text>
+  <path d="M 460 303 L 495 303" fill="none" stroke="#ea580c" stroke-width="2.2" marker-end="url(#arrowOrange)"/>
+  <rect x="445.5" y="281.0" width="64" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="477.5" y="295.0" text-anchor="middle" class="tiny">dispatch</text>
+  <path d="M 665 303 L 700 303" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowBlue)"/>
+  <rect x="638.5" y="281.0" width="88" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="682.5" y="295.0" text-anchor="middle" class="tiny">tool schema</text>
+  <path d=" M 375 346 L 375 430 L 310 430 L 310 455" fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#arrowGreen)"/>
+  <rect x="315.5" y="408.0" width="54" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="342.5" y="422.0" text-anchor="middle" class="tiny">store</text>
+  <path d=" M 580 346 L 580 430 L 310 430" fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#arrowGreen)"/>
+  <rect x="520.0" y="366.0" width="120" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="580.0" y="380.0" text-anchor="middle" class="tiny">todo read/write</text>
+  <path d=" M 310 455 L 310 390 L 375 390 L 375 346" fill="none" stroke="#059669" stroke-width="2.2" marker-end="url(#arrowGreen)"/>
+  <rect x="314.5" y="368.0" width="56" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="342.5" y="382.0" text-anchor="middle" class="tiny">history</text>
+  <path d=" M 760 455 L 760 390 L 785 390 L 785 346" fill="none" stroke="#6b7280" stroke-width="2.2" marker-end="url(#arrowOrange)" stroke-dasharray="6 4"/>
+  <rect x="724.5" y="368.0" width="96" height="20" rx="8" fill="#ffffff" opacity="0.96"/>
+  <text x="772.5" y="382.0" text-anchor="middle" class="tiny">proxy to app</text>
+  <g transform="translate(70,590)">
+    <line x1="0" y1="8" x2="28" y2="8" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowBlue)"/>
+    <text x="36" y="12" class="tiny">Primary request/response</text>
+    <line x1="190" y1="8" x2="218" y2="8" stroke="#059669" stroke-width="2.2" marker-end="url(#arrowGreen)"/>
+    <text x="226" y="12" class="tiny">Persistence path</text>
+    <line x1="360" y1="8" x2="388" y2="8" stroke="#7c3aed" stroke-width="2.2" marker-end="url(#arrowPurple)"/>
+    <text x="396" y="12" class="tiny">Streaming updates</text>
+    <line x1="560" y1="8" x2="588" y2="8" stroke="#6b7280" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#arrowOrange)"/>
+    <text x="596" y="12" class="tiny">Proxy / infrastructure</text>
+  </g>
+</svg>
